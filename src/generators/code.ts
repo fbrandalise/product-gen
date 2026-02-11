@@ -172,6 +172,7 @@ import router from './router'
 import App from './App.vue'
 
 import 'primeicons/primeicons.css'
+import './assets/tailwind.css'
 
 const app = createApp(App)
 
@@ -190,6 +191,41 @@ app.mount('#app')
       path: "env.d.ts",
       description: "TypeScript env declarations",
       content: `/// <reference types="vite/client" />
+`,
+    },
+    {
+      path: "src/assets/tailwind.css",
+      description: "Tailwind CSS entry point",
+      content: `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+`,
+    },
+    {
+      path: "tailwind.config.js",
+      description: "Tailwind CSS configuration",
+      content: `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+`,
+    },
+    {
+      path: "postcss.config.js",
+      description: "PostCSS configuration for Tailwind",
+      content: `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
 `,
     },
   ];
