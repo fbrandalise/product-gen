@@ -32,7 +32,10 @@ export class JiraClient {
     const fields = await this.request<JiraField[]>("/rest/api/3/field");
 
     for (const field of fields) {
-      if (field.name === "Epic Name" || field.schema?.custom?.includes("epic")) {
+      if (
+        field.name === "Epic Name" ||
+        field.schema?.custom?.includes("gh-epic-label")
+      ) {
         this.epicNameFieldId = field.id;
       }
       if (
@@ -97,12 +100,14 @@ export class JiraClient {
         ],
       },
       issuetype: { name: "Epic" },
-      customfield_10015: todayISO(),
     };
 
     if (this.epicNameFieldId) {
       fields[this.epicNameFieldId] = name;
     }
+
+    // Must be set after dynamic field assignments to avoid being overwritten
+    fields.customfield_10015 = todayISO();
 
     return this.request<JiraIssue>("/rest/api/3/issue", {
       method: "POST",
@@ -142,12 +147,14 @@ export class JiraClient {
       priority: { name: mapPriority(story.priority) },
       labels: story.labels,
       parent: { key: epicKey },
-      customfield_10015: todayISO(),
     };
 
     if (this.storyPointsFieldId) {
       fields[this.storyPointsFieldId] = story.storyPoints;
     }
+
+    // Must be set after dynamic field assignments to avoid being overwritten
+    fields.customfield_10015 = todayISO();
 
     return this.request<JiraIssue>("/rest/api/3/issue", {
       method: "POST",
