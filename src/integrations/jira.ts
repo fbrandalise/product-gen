@@ -12,12 +12,21 @@ interface JiraField {
   schema?: { type: string; custom?: string };
 }
 
+interface JiraIssueType {
+  id: string;
+  name: string;
+  subtask: boolean;
+}
+
 export class JiraClient {
   private baseUrl: string;
   private auth: string;
   private projectKey: string;
   private epicNameFieldId: string | null = null;
   private storyPointsFieldId: string | null = null;
+  private epicTypeId: string | null = null;
+  private storyTypeId: string | null = null;
+  private subtaskTypeId: string | null = null;
 
   constructor(config: JiraConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
@@ -45,6 +54,27 @@ export class JiraClient {
       ) {
         this.storyPointsFieldId = field.id;
       }
+    }
+
+    // Discover issue type IDs (handles translated Jira instances)
+    const issueTypes = await this.request<JiraIssueType[]>(
+      `/rest/api/3/project/${this.projectKey}/statuses`
+    ).then(
+      // /statuses returns [{name,id,statuses},...] per issue type – just need name+id
+      (data) => data,
+      // fallback: use global issue types endpoint
+      () => this.request<JiraIssueType[]>("/rest/api/3/issuetype")
+    );
+
+    const epicNames = ["epic", "épico"];
+    const storyNames = ["story", "história", "historia"];
+    const subtaskNames = ["sub-task", "subtask", "sub-tarefa", "subtarefa"];
+
+    for (const it of issueTypes) {
+      const lower = it.name.toLowerCase();
+      if (epicNames.includes(lower)) this.epicTypeId = it.id;
+      if (storyNames.includes(lower)) this.storyTypeId = it.id;
+      if (subtaskNames.includes(lower) || it.subtask) this.subtaskTypeId = it.id;
     }
   }
 
@@ -99,7 +129,7 @@ export class JiraClient {
           },
         ],
       },
-      issuetype: { name: "Epic" },
+      issuetype: this.epicTypeId ? { id: this.epicTypeId } : { name: "Epic" },
     };
 
     if (this.epicNameFieldId) {
@@ -143,7 +173,7 @@ export class JiraClient {
           },
         ],
       },
-      issuetype: { name: "Story" },
+      issuetype: this.storyTypeId ? { id: this.storyTypeId } : { name: "Story" },
       priority: { name: mapPriority(story.priority) },
       labels: story.labels,
       parent: { key: epicKey },
@@ -180,7 +210,7 @@ export class JiraClient {
           },
         ],
       },
-      issuetype: { name: "Sub-task" },
+      issuetype: this.subtaskTypeId ? { id: this.subtaskTypeId } : { name: "Sub-task" },
       parent: { key: parentKey },
       customfield_10015: todayISO(),
     };
