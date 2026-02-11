@@ -1,10 +1,33 @@
-import OpenAI from "openai";
+import OpenAI, { APIConnectionError, APIError } from "openai";
 import type { ScrapedApp, PRD, Epic } from "../types/index.js";
 
 const MODEL = "gpt-4o";
 
+export function formatOpenAIError(err: unknown): string {
+  if (err instanceof APIConnectionError) {
+    return `Could not connect to OpenAI API. Check your internet connection and try again.`;
+  }
+  if (err instanceof APIError) {
+    if (err.status === 401) {
+      return `Invalid OPENAI_API_KEY. Check the key in your .env file.`;
+    }
+    if (err.status === 429) {
+      return `OpenAI rate limit exceeded. Wait a moment and try again, or check your billing at https://platform.openai.com/account/billing`;
+    }
+    if (err.status === 500 || err.status === 503) {
+      return `OpenAI service is temporarily unavailable (${err.status}). Try again later.`;
+    }
+    return `OpenAI API error (${err.status}): ${err.message}`;
+  }
+  return (err as Error).message;
+}
+
 export function createClient(apiKey: string): OpenAI {
-  return new OpenAI({ apiKey });
+  return new OpenAI({
+    apiKey,
+    maxRetries: 4,
+    timeout: 120_000, // 2 minutes
+  });
 }
 
 export async function analyzeAppForPRD(

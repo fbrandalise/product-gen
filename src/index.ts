@@ -14,6 +14,7 @@ import {
   analyzeAppForPRD,
   generateUserStories,
   generateVueCode,
+  formatOpenAIError,
 } from "./analyzer/claude.js";
 import { writePRDToMarkdown, writePRDToJSON } from "./generators/prd.js";
 import {
@@ -99,7 +100,7 @@ program
           `PRD generated: ${chalk.green(mdPath)} (${prd.features.length} features, ${prd.businessRules.length} business rules)`
         );
       } catch (err) {
-        spinner.fail(`PRD generation failed: ${(err as Error).message}`);
+        spinner.fail(`PRD generation failed: ${formatOpenAIError(err)}`);
         process.exit(1);
       }
     }
@@ -121,7 +122,7 @@ program
         );
       } catch (err) {
         spinner.fail(
-          `Story generation failed: ${(err as Error).message}`
+          `Story generation failed: ${formatOpenAIError(err)}`
         );
         process.exit(1);
       }
@@ -166,7 +167,7 @@ program
         );
       } catch (err) {
         spinner.fail(
-          `Code generation failed: ${(err as Error).message}`
+          `Code generation failed: ${formatOpenAIError(err)}`
         );
       }
     }
@@ -247,7 +248,7 @@ program
       await writePRDToJSON(prd, opts.output);
       prdSpinner.succeed(`PRD generated: ${chalk.green(mdPath)}`);
     } catch (err) {
-      prdSpinner.fail(`Failed: ${(err as Error).message}`);
+      prdSpinner.fail(`Failed: ${formatOpenAIError(err)}`);
       process.exit(1);
     }
   });
