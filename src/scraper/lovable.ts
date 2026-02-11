@@ -8,6 +8,8 @@ import type {
 
 const NAVIGATION_WAIT_MS = 3000;
 const PAGE_LOAD_WAIT_MS = 5000;
+const NAV_TIMEOUT_MS = 60000;
+const NAV_RETRIES = 2;
 
 /**
  * Detects a Chrome/Chromium executable path on the system.
@@ -40,8 +42,7 @@ export async function scrapeLovableApp(url: string): Promise<ScrapedApp> {
     await page.setViewport({ width: 1440, height: 900 });
 
     // Load the initial page
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-    await page.waitForFunction(() => document.readyState === "complete");
+    await navigateWithRetry(page, url);
     await delay(PAGE_LOAD_WAIT_MS);
 
     // Discover all internal routes from navigation and links
@@ -71,7 +72,7 @@ export async function scrapeLovableApp(url: string): Promise<ScrapedApp> {
 
 async function scrapePage(page: Page, url: string): Promise<ScrapedPage> {
   if (page.url() !== url) {
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    await navigateWithRetry(page, url);
     await delay(NAVIGATION_WAIT_MS);
   }
 
@@ -245,6 +246,34 @@ async function extractGlobalStyles(page: Page): Promise<string> {
     }
     return styles.join("\n");
   });
+}
+
+/**
+ * Navigate to a URL with retry logic and a lenient loading strategy.
+ * First tries "networkidle2" (all requests settled); on timeout falls back to
+ * "domcontentloaded" so that slow background requests don't block scraping.
+ */
+async function navigateWithRetry(page: Page, url: string): Promise<void> {
+  for (let attempt = 0; attempt <= NAV_RETRIES; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: "networkidle2", timeout: NAV_TIMEOUT_MS });
+      return;
+    } catch (err: unknown) {
+      const isTimeout =
+        err instanceof Error && err.message.includes("timeout");
+      if (!isTimeout || attempt === NAV_RETRIES) throw err;
+
+      // Retry with a more lenient wait strategy
+      try {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
+        // Give the SPA a moment to hydrate
+        await delay(PAGE_LOAD_WAIT_MS);
+        return;
+      } catch {
+        // Let the outer loop retry
+      }
+    }
+  }
 }
 
 function delay(ms: number): Promise<void> {
