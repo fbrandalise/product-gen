@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+// Polyfill for esbuild/tsx compatibility with puppeteer
+// @ts-expect-error -- __name is injected by esbuild but missing at runtime
+globalThis.__name ??= (target: unknown) => target;
+
 import { Command } from "commander";
 import chalk from "chalk";
 import ora from "ora";
