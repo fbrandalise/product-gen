@@ -1,0 +1,27 @@
+{
+  "name": "product-gen",
+  "version": "1.0.0",
+  "description": "Generate PRDs, user stories, and Vue 3 + PrimeVue code from Lovable prototypes",
+  "type": "module",
+  "bin": {
+    "product-gen": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "puppeteer-core": "^24.2.1",
+    "chalk": "^5.4.1",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
