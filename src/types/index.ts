@@ -129,7 +129,7 @@ export interface GeneratedProject {
 // ── Config types ──
 
 export interface AppConfig {
-  anthropicApiKey: string;
+  openaiApiKey: string;
   jira: JiraConfig;
   outputDir: string;
 }

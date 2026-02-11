@@ -26,7 +26,7 @@ cp .env.example .env
 
 | Variable | Required | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude |
+| `OPENAI_API_KEY` | Yes | OpenAI API key |
 | `JIRA_BASE_URL` | For Jira | e.g. `https://your-domain.atlassian.net` |
 | `JIRA_EMAIL` | For Jira | Your Atlassian account email |
 | `JIRA_API_TOKEN` | For Jira | [Create API token](https://id.atlassian.com/manage-profile/security/api-tokens) |
@@ -88,6 +88,6 @@ output/
 
 - **Runtime**: Node.js + TypeScript
 - **Scraping**: Puppeteer
-- **AI**: Claude (Anthropic API)
+- **AI**: OpenAI GPT-4o
 - **Jira**: Atlassian REST API v3
 - **Output**: Vue 3, PrimeVue 4, Pinia, Vue Router, Tailwind CSS

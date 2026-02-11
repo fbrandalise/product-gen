@@ -2,13 +2,13 @@ import "dotenv/config";
 import type { AppConfig } from "./types/index.js";
 
 export function loadConfig(): AppConfig {
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicApiKey) {
-    throw new Error("ANTHROPIC_API_KEY is required. Set it in .env or as environment variable.");
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    throw new Error("OPENAI_API_KEY is required. Set it in .env or as environment variable.");
   }
 
   return {
-    anthropicApiKey,
+    openaiApiKey,
     jira: {
       baseUrl: process.env.JIRA_BASE_URL ?? "",
       email: process.env.JIRA_EMAIL ?? "",
