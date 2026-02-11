@@ -97,6 +97,7 @@ export class JiraClient {
         ],
       },
       issuetype: { name: "Epic" },
+      customfield_10015: todayISO(),
     };
 
     if (this.epicNameFieldId) {
@@ -141,6 +142,7 @@ export class JiraClient {
       priority: { name: mapPriority(story.priority) },
       labels: story.labels,
       parent: { key: epicKey },
+      customfield_10015: todayISO(),
     };
 
     if (this.storyPointsFieldId) {
@@ -173,6 +175,7 @@ export class JiraClient {
       },
       issuetype: { name: "Sub-task" },
       parent: { key: parentKey },
+      customfield_10015: todayISO(),
     };
 
     return this.request<JiraIssue>("/rest/api/3/issue", {
@@ -205,6 +208,11 @@ export class JiraClient {
 
     return resp.json() as Promise<T>;
   }
+}
+
+function todayISO(): string {
+  const d = new Date();
+  return d.toISOString().slice(0, 10); // "yyyy-MM-dd"
 }
 
 function mapPriority(
