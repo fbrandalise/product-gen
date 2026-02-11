@@ -239,15 +239,29 @@ Each file should be:
   }
 ]
 
+IMPORTANT — Do NOT generate any of these files (they are already scaffolded):
+- package.json
+- vite.config.ts
+- tsconfig.json
+- index.html
+- env.d.ts
+- src/main.ts
+- src/assets/tailwind.css
+- tailwind.config.js
+- postcss.config.js
+
+The scaffolded main.ts already imports PrimeVue 4 with the Aura theme preset, Pinia, Vue Router, primeicons CSS, and Tailwind CSS.
+Do NOT use any PrimeVue v3 imports — in particular, NEVER import "primevue/resources/primevue.min.css" or "primevue/resources/themes/*" as these do not exist in PrimeVue 4.
+
 Include:
 1. Main App.vue with router-view
-2. Router configuration matching the app's navigation
+2. Router configuration (src/router/index.ts) matching the app's navigation
 3. Vue components for each screen/feature
 4. Pinia stores for state management
 5. TypeScript interfaces for data models
-6. PrimeVue component usage (DataTable, Dialog, Button, InputText, etc.)
+6. PrimeVue 4 component usage (DataTable, Dialog, Button, InputText, etc.)
 
-Use PrimeVue's unstyled mode with Tailwind CSS for custom styling.
+Use PrimeVue 4's theme system (already configured via Aura preset) with Tailwind CSS for custom styling.
 
 Respond ONLY with the JSON array, no markdown fences.`,
       },
