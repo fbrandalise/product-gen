@@ -1,14 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import type { ScrapedApp, PRD, Epic } from "../types/index.js";
 
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "gpt-4o";
 
-export function createClient(apiKey: string): Anthropic {
-  return new Anthropic({ apiKey });
+export function createClient(apiKey: string): OpenAI {
+  return new OpenAI({ apiKey });
 }
 
 export async function analyzeAppForPRD(
-  client: Anthropic,
+  client: OpenAI,
   app: ScrapedApp
 ): Promise<PRD> {
   const pagesDescription = app.pages
@@ -22,11 +22,7 @@ export async function analyzeAppForPRD(
     .map((n) => `- ${n.label}: ${n.href}`)
     .join("\n");
 
-  // Build messages with screenshots
-  const contentBlocks: Anthropic.Messages.ContentBlockParam[] = [
-    {
-      type: "text",
-      text: `You are a senior product manager. Analyze the following web application scraped from a Lovable prototype and generate a comprehensive PRD (Product Requirements Document).
+  const userPrompt = `Analyze the following web application scraped from a Lovable prototype and generate a comprehensive PRD.
 
 The app has ${app.pages.length} pages. Here is the content:
 
@@ -71,50 +67,63 @@ Generate a PRD in the following JSON format. Be thorough with business rules - i
   "successMetrics": ["string"]
 }
 
-Respond ONLY with the JSON, no markdown fences.`,
-    },
+Respond ONLY with the JSON, no markdown fences.`;
+
+  // Build content parts with screenshots
+  const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
+    { type: "text", text: userPrompt },
   ];
 
   // Add screenshots for each page (up to 5 to stay within limits)
   for (const page of app.pages.slice(0, 5)) {
     if (page.screenshot) {
-      contentBlocks.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: "image/png",
-          data: page.screenshot,
+      contentParts.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/png;base64,${page.screenshot}`,
+          detail: "high",
         },
       });
-      contentBlocks.push({
+      contentParts.push({
         type: "text",
         text: `Screenshot of: ${page.title} (${page.url})`,
       });
     }
   }
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8192,
-    messages: [{ role: "user", content: contentBlocks }],
-  });
-
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-  return JSON.parse(text) as PRD;
-}
-
-export async function generateUserStories(
-  client: Anthropic,
-  prd: PRD
-): Promise<Epic[]> {
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODEL,
     max_tokens: 8192,
     messages: [
       {
+        role: "system",
+        content:
+          "You are a senior product manager. Analyze web applications and generate comprehensive PRDs. Always respond with valid JSON only, no markdown fences.",
+      },
+      { role: "user", content: contentParts },
+    ],
+  });
+
+  const text = response.choices[0]?.message?.content ?? "";
+  return JSON.parse(text) as PRD;
+}
+
+export async function generateUserStories(
+  client: OpenAI,
+  prd: PRD
+): Promise<Epic[]> {
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    max_tokens: 8192,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a senior product manager breaking PRDs into epics and user stories. Always respond with valid JSON only, no markdown fences.",
+      },
+      {
         role: "user",
-        content: `You are a senior product manager breaking a PRD into epics and user stories for a development team.
+        content: `Break the following PRD into epics and user stories for a development team.
 
 Here is the PRD:
 ${JSON.stringify(prd, null, 2)}
@@ -157,13 +166,12 @@ Respond ONLY with the JSON array, no markdown fences.`,
     ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
+  const text = response.choices[0]?.message?.content ?? "";
   return JSON.parse(text) as Epic[];
 }
 
 export async function generateVueCode(
-  client: Anthropic,
+  client: OpenAI,
   prd: PRD,
   app: ScrapedApp
 ): Promise<string> {
@@ -171,13 +179,18 @@ export async function generateVueCode(
     .map((p) => `Page "${p.title}": ${p.textContent.slice(0, 2000)}`)
     .join("\n\n");
 
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODEL,
     max_tokens: 8192,
     messages: [
       {
+        role: "system",
+        content:
+          "You are a senior Vue.js developer. Generate Vue 3 + PrimeVue project files. Always respond with valid JSON only, no markdown fences.",
+      },
+      {
         role: "user",
-        content: `You are a senior Vue.js developer. Generate a Vue 3 + PrimeVue project structure based on the following PRD and app analysis.
+        content: `Generate a Vue 3 + PrimeVue project structure based on the following PRD and app analysis.
 
 PRD:
 ${JSON.stringify(prd, null, 2)}
@@ -216,7 +229,5 @@ Respond ONLY with the JSON array, no markdown fences.`,
     ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-  return text;
+  return response.choices[0]?.message?.content ?? "";
 }

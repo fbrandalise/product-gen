@@ -45,7 +45,7 @@ program
     const outputDir = opts.output;
     await mkdir(outputDir, { recursive: true });
 
-    const client = createClient(config.anthropicApiKey);
+    const client = createClient(config.openaiApiKey);
 
     // Step 1: Scrape
     let scrapedApp;
@@ -218,7 +218,7 @@ program
   .option("-o, --output <dir>", "Output directory", "./output")
   .action(async (opts) => {
     const config = loadConfig();
-    const client = createClient(config.anthropicApiKey);
+    const client = createClient(config.openaiApiKey);
 
     const spinner = ora("Loading scraped data...").start();
     let scrapedApp;
