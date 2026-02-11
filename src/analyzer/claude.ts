@@ -1,3 +1,4 @@
+import https from "node:https";
 import OpenAI, { APIConnectionError, APIError } from "openai";
 import type { ScrapedApp, PRD, Epic } from "../types/index.js";
 
@@ -27,6 +28,7 @@ export function createClient(apiKey: string): OpenAI {
     apiKey,
     maxRetries: 4,
     timeout: 120_000, // 2 minutes
+    httpAgent: new https.Agent({ rejectUnauthorized: false }),
   });
 }
 
