@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Disable SSL certificate verification for corporate proxies / self-signed certs
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Polyfill for esbuild/tsx compatibility with puppeteer
 // @ts-expect-error -- __name is injected by esbuild but missing at runtime
 globalThis.__name ??= (target: unknown) => target;
